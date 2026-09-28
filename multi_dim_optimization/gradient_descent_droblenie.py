@@ -143,7 +143,7 @@ print(f"Execution time: {end - start:.6f}")
 print(f"Iterations: {len(iterations)}")
 
 
-df.to_csv("result_gd.txt", index=False)
+df.to_csv("result_gradient_descent_droblenie.txt", index=False)
 
 
 plt.plot(iterations, [-val for val in minus_f_x_k_plus_1_arr])
