@@ -1,7 +1,8 @@
+import time
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import time
 
 pd.set_option("display.max_columns", None)
 pd.set_option("display.width", None)
@@ -87,18 +88,18 @@ for i in range(max_iterations):
     t: float = 1  # коэффициент шага градиентного спуска
     c: float = 0.9  # коэффициент дробления шага градиентного спуска
     prev_x: np.ndarray = x.copy()  # точка до изменения
-    grad: np.ndarray = get_my_func_grad(x) # градиент в точке
+    grad: np.ndarray = get_my_func_grad(x)  # градиент в точке
     p: np.ndarray = grad
 
-    my_func_curr: np.ndarray = get_my_func(x)  # значение функции в точке до изменения
-    my_func_next: np.ndarray = get_my_func(
+    my_func_curr: float = get_my_func(x)  # значение функции в точке до изменения
+    my_func_next: float = get_my_func(
         x - t * get_my_func_grad(x)
     )  # значение функции в точке после изменения
 
     # дробление шага
     while my_func_next > my_func_curr:
         t *= c
-        my_func_next: np.ndarray = get_my_func(x - t * get_my_func_grad(x))
+        my_func_next: float = get_my_func(x - t * get_my_func_grad(x))
 
     # обновление точки
     x -= t * get_my_func_grad(x)
