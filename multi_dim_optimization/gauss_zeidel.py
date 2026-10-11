@@ -1,7 +1,10 @@
 import time
+from typing import Callable
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+
 from one_dimensional_optimization import dihotomy
 
 pd.set_option("display.max_columns", None)
@@ -46,36 +49,53 @@ def phi(x: np.ndarray, i: int, t: float):
     return get_my_func(x_temp)
 
 
-x: np.ndarray = np.random.uniform(-100, 100, 3)  # генерация рандомной точки
+def gauss_zeidel_method(
+    history: list[dict] | None = None,
+    minimization_method: Callable = dihotomy,
+    min_eps: float = 1e-5,
+    max_iterations: int = 2000,
+) -> np.ndarray:
+
+    x: np.ndarray = np.random.uniform(-100, 100, 3)  # генерация рандомной точки
+
+    for i in range(max_iterations):
+        prev_x = x.copy()
+
+        for j in range(len(x)):
+            x[j] = minimization_method(-1e7, 1e7, lambda t: phi(x, j, t))
+
+        x_diff: np.ndarray = x - prev_x
+
+        if history is not None:
+            history.append(
+                {
+                    "iteration": i + 1,
+                    "x": x.copy(),
+                    "f(x)": -get_my_func(x),
+                }
+            )
+
+        # условие досрочной остановки
+        if np.sum(np.abs(x_diff)) < min_eps:
+            break
+
+    return x
 
 
-print(f"Initial point x = {x}")
-
-iterations: list = []
-coords_iterations: list = []
+history: list[dict] = []
 
 start = time.perf_counter()
 
-for i in range(max_iterations):
-    prev_x = x.copy()
-
-    for j in range(len(x)):
-        x[j] = dihotomy(-1e7, 1e7, lambda t: phi(x, j, t))
-
-    x_diff: np.ndarray = x - prev_x
-
-    iterations.append(i)
-    coords_iterations.append(x.copy())
-
-    # условие досрочной остановки
-    if np.sum(np.abs(x_diff)) < min_eps:
-        break
-
+x = gauss_zeidel_method(
+    history=history,
+    min_eps=min_eps,
+    max_iterations=max_iterations,
+)
 
 end = time.perf_counter()
 
 # таблица итераций
-df = pd.DataFrame({"iteration": iterations, "x": coords_iterations})
+df = pd.DataFrame(history)
 
 print(df)
 
@@ -83,9 +103,10 @@ print(df)
 print(f"Extr = {x}")
 
 print(f"Execution time: {end - start:.6f}")
-print(f"Iterations: {len(iterations)}")
+print(f"Iterations: {len(history)}")
 
-plt.plot(iterations, [-val for val in [get_my_func(el) for el in coords_iterations]])
+# график сходимости
+plt.plot(df["iteration"], df["f(x)"])
 plt.xlabel("Итерация")
 plt.ylabel("Значение исходной функции")
 plt.title("Сходимость метода Гаусса-Зейделя")
