@@ -12,10 +12,7 @@ pd.set_option("display.width", None)
 pd.set_option("display.max_colwidth", None)
 np.random.seed(42)
 
-max_iterations: int = 2000  # максимальное число итераций
-min_eps: float = (
-    1e-5  # минимальная разница между точками для продолжения работы алгоритма
-)
+
 round_acc: int = 3  # до скольки цифр округлять
 
 
@@ -67,9 +64,6 @@ def get_my_func_grad(x: np.ndarray) -> np.ndarray:
         return -1 * (-4 * x[2] - 2 * x[0] - 5)
 
     return np.array([x1_der(x), x2_der(x), x3_der(x)])
-
-
-history: list[dict] = []
 
 
 def fletcher_rieves_method(
@@ -128,6 +122,9 @@ def fletcher_rieves_method(
             break
 
     return x
+
+
+history: list[dict] = []
 
 
 start = time.perf_counter()
