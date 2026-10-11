@@ -7,32 +7,6 @@ import pandas as pd
 
 from one_dimensional_optimization import dihotomy
 
-
-def gd_minimization(
-    func: Callable,
-    func_gd: Callable,
-    dim: int,
-    max_iterations: int = 400,
-    min_acc: float = 1e-5,
-) -> np.ndarray:
-    x: np.ndarray = np.random.uniform(-100, 100, dim)
-    for _ in range(max_iterations):
-        grad: np.ndarray = func_gd(x)
-        p: np.ndarray = grad
-        t: float = dihotomy(0, 10, lambda t: func(x - t * p))
-        prev_x: np.ndarray = x.copy()  # точка до изменения
-
-        # обновление точки
-        x -= t * grad
-        x_diff = x - prev_x
-
-        # условие досрочной остановки
-        if np.sum(np.abs(x_diff)) < min_acc:
-            break
-
-    return x
-
-
 pd.set_option("display.max_columns", None)
 pd.set_option("display.width", None)
 pd.set_option("display.max_colwidth", None)
@@ -95,72 +69,78 @@ def get_my_func_grad(x: np.ndarray) -> np.ndarray:
     return np.array([x1_der(x), x2_der(x), x3_der(x)])
 
 
-x: np.ndarray = np.random.uniform(-100, 100, 3)  # генерация рандомной точки
+def gd_minimization(
+    func: Callable,
+    func_gd: Callable,
+    dim: int,
+    history: list[dict] | None = None,
+    minimization_method: Callable = dihotomy,
+    max_iterations: int = 400,
+    min_acc: float = 1e-5,
+) -> np.ndarray:
+    x: np.ndarray = np.random.uniform(-100, 100, dim)
 
-# инициализация вспомогательных списков для хранения данных итераций
-iterations: list = []
-x_k: list = []
-x_k_plus_1: list = []
-t_arr: list = []
-minus_f_x_k_plus_1_arr: list = []
-x_diff_arr: list = []
+    for i in range(max_iterations):
+        grad: np.ndarray = func_gd(x)
+        t: float = minimization_method(0, 10, lambda t: func(x - t * grad))
 
-print(f"Initial point x = {x}")
+        prev_x: np.ndarray = x.copy()
+
+        # обновление точки
+        x -= t * grad
+        x_diff = x - prev_x
+
+        if history is not None:
+            history.append(
+                {
+                    "iteration": i + 1,
+                    "t": t,
+                    "x_k": prev_x.copy(),
+                    "x_k+1": x.copy(),
+                    "x_diff": x_diff.copy(),
+                    "f(x_k+1)": -func(x),
+                }
+            )
+
+        # условие досрочной остановки
+        if np.sum(np.abs(x_diff)) < min_acc:
+            break
+
+    return x
+
+
+history: list[dict] = []
 
 start = time.perf_counter()
 
-for i in range(max_iterations):
-    grad: np.ndarray = get_my_func_grad(x)  # градиент в точке
-    p: np.ndarray = grad
-    t: float = dihotomy(
-        0, 10, lambda t: get_my_func(x - t * p)
-    )  # коэффициент шага градиентного спуска
-    prev_x: np.ndarray = x.copy()  # точка до изменения
-
-    # обновление точки
-    x -= t * grad
-
-    x_diff = x - prev_x
-
-    iterations.append(i)
-    t_arr.append(round(t, round_acc))
-    x_k.append(np.round(prev_x, round_acc))
-    x_k_plus_1.append(np.round(x, round_acc))
-    minus_f_x_k_plus_1_arr.append(np.round(get_my_func(x), round_acc))
-    x_diff_arr.append(np.round(x - prev_x, round_acc))
-
-    # условие досрочной остановки
-    if np.sum(np.abs(x_diff)) < min_eps:
-        break
+extr = gd_minimization(
+    func=get_my_func,
+    func_gd=get_my_func_grad,
+    dim=3,
+    history=history,
+    max_iterations=max_iterations,
+    min_acc=min_eps,
+)
 
 end = time.perf_counter()
 
 # таблица итераций
-df = pd.DataFrame(
-    {
-        "iteration": iterations,
-        "t": t_arr,
-        "x_k": x_k,
-        "x_k+1": x_k_plus_1,
-        "x_diff": x_diff_arr,
-        "f(x_k+1)": [-val for val in minus_f_x_k_plus_1_arr],
-    }
-)
+df = pd.DataFrame(history)
+
+print(f"Initial point x = {history[0]['x_k']}")
 
 print(df.head())
 print(df.tail())
 
 # найденный экстремум
-extr: np.ndarray = x_k_plus_1[-1]
 print(f"Extr = {extr}")
-
 print(f"Execution time: {end - start:.6f}")
-print(f"Iterations: {len(iterations)}")
+print(f"Iterations: {len(history)}")
 
 df.to_csv("result_gradient_descent_min.txt", index=False)
 
-
-plt.plot(iterations, [-val for val in minus_f_x_k_plus_1_arr])
+# график сходимости
+plt.plot(df["iteration"], df["f(x_k+1)"])
 plt.xlabel("Итерация")
 plt.ylabel("Значение исходной функции")
 plt.title("Сходимость градиентного спуска (минимизация)")
