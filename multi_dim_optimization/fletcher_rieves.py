@@ -69,7 +69,7 @@ def get_my_func_grad(x: np.ndarray) -> np.ndarray:
 def fletcher_rieves_method(
     func: Callable,
     func_grad: Callable,
-    history: list,
+    history: list[dict] | None = None,
     minimization_method: Callable = dihotomy,
     min_eps: float = 1e-5,
     max_iterations: int = 2000,
@@ -106,16 +106,17 @@ def fletcher_rieves_method(
 
         x_diff = x - prev_x
 
-        history.append(
-            {
-                "iteration": i + 1,
-                "t": t,
-                "x_k": prev_x.copy(),
-                "x_k+1": x.copy(),
-                "x_diff": x_diff.copy(),
-                "f(x_k+1)": -func(x),
-            }
-        )
+        if history is not None:
+            history.append(
+                {
+                    "iteration": i + 1,
+                    "t": t,
+                    "x_k": prev_x.copy(),
+                    "x_k+1": x.copy(),
+                    "x_diff": x_diff.copy(),
+                    "f(x_k+1)": -func(x),
+                }
+            )
 
         # условие досрочной остановки
         if np.sum(np.abs(x_diff)) < min_eps:
