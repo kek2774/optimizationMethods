@@ -1,7 +1,8 @@
+import time
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import time
 
 from one_dimensional_optimization import dihotomy
 
@@ -83,7 +84,6 @@ start = time.perf_counter()
 
 
 for i in range(max_iterations):
-
     if i == 0:
         grad: np.ndarray = get_my_func_grad(x)  # градиент в точке
         p: np.ndarray = grad
@@ -96,7 +96,9 @@ for i in range(max_iterations):
         x -= t * p
     else:
         new_grad: np.ndarray = get_my_func_grad(x)
-        beta: float = np.square(np.linalg.norm(new_grad)) / np.square(np.linalg.norm(grad))
+        beta: float = np.square(np.linalg.norm(new_grad)) / np.square(
+            np.linalg.norm(grad)
+        )
         p = new_grad + beta * p
         grad = new_grad
 
@@ -107,10 +109,8 @@ for i in range(max_iterations):
 
         # обновление точки
         x -= t * p
-        
 
     x_diff = x - prev_x
-    
 
     iterations.append(i)
     t_arr.append(round(t, round_acc))
@@ -146,7 +146,7 @@ print(f"Extr = {extr}")
 print(f"Execution time: {end - start:.6f}")
 print(f"Iterations: {len(iterations)}")
 
-df.to_csv("result_fletcher_rieves.txt", index=False)
+df.to_csv("./result_fletcher_rieves.txt", index=False)
 
 
 plt.plot(iterations, [-val for val in minus_f_x_k_plus_1_arr])
