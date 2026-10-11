@@ -3,6 +3,7 @@ from typing import Literal
 
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
 
 dim: int = 4
 max_iter: int = 100
@@ -161,3 +162,23 @@ print(f"x_max = {x_max}, f_max = {f(x_max)}")
 print(df_max)
 print(f"x_min = {x_min}, f_min = {f(x_min)}")
 print(df_min)
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# График минимума
+axes[0].plot(df_min["Итерация"], df_min["f(x)"], marker="o")
+axes[0].set_title("Симплекс-метод: минимум")
+axes[0].set_xlabel("Итерация")
+axes[0].set_ylabel("f(x)")
+axes[0].grid(True)
+
+# График максимума
+axes[1].plot(df_max["Итерация"], df_max["f(x)"], marker="o")
+axes[1].set_title("Симплекс-метод: максимум")
+axes[1].set_xlabel("Итерация")
+axes[1].set_ylabel("f(x)")
+axes[1].grid(True)
+
+plt.tight_layout()
+plt.savefig("simplex.png", dpi=300, bbox_inches="tight")
+plt.show()
