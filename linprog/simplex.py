@@ -18,7 +18,7 @@ def simplex_method(
     gamma: dict,
     beta: dict,
     dim: int,
-    history: list,
+    history: list[dict] | None = None,
     max_iter: int = 100,
     finding: Literal["max", "min"] = "min",
 ) -> np.ndarray:  # type: ignore
@@ -31,6 +31,7 @@ def simplex_method(
         gamma (dict): коэффициенты в ограничениях
         beta (dict): свободные члены
         dim (int): размерность пространства
+        history(list[dict] | None = None): таблица итераций. Defaults to None
         max_iter (int, optional): максимальное количество итераций. Defaults to 100.
         finding (Literal["max", "min"], optional): какую точку находим (минимума или максимума). Defaults to "min".
 
@@ -60,18 +61,19 @@ def simplex_method(
                 i_sum += c[i] * gamma[i][j]
             delta[j] = c[j] - i_sum
 
-        history.append(
-            {
-                "Итерация": iteration,
-                "Базис": B.copy(),
-                "Точка": x.copy(),
-                "f(x)": f(x),
-                "delta": delta.copy(),
-                "Входит": None,
-                "Выходит": None,
-                "rho": None,
-            }
-        )
+        if history is not None:
+            history.append(
+                {
+                    "Итерация": iteration,
+                    "Базис": B.copy(),
+                    "Точка": x.copy(),
+                    "f(x)": f(x),
+                    "delta": delta.copy(),
+                    "Входит": None,
+                    "Выходит": None,
+                    "rho": None,
+                }
+            )
 
         enters: int = 0
         leaves: int = 0
@@ -102,7 +104,8 @@ def simplex_method(
                         rho = t
                         leaves = i
 
-            history[-1].update({"Входит": enters, "Выходит": leaves, "rho": rho})
+            if history is not None:
+                history[-1].update({"Входит": enters, "Выходит": leaves, "rho": rho})
 
             # выражаем входящую переменную
 
@@ -146,8 +149,8 @@ gamma: dict = {
     2: {3: 0.5, 4: 0.5},
 }  # коэффициенты перед переменными
 beta: dict = {1: 16, 2: 7}  # свободные члены
-min_history: list = []
-max_history: list = []
+min_history: list[dict] = []
+max_history: list[dict] = []
 
 x_max: np.ndarray = simplex_method(B, c, gamma, beta, dim, max_history, finding="max")
 x_min: np.ndarray = simplex_method(B, c, gamma, beta, dim, min_history, finding="min")
