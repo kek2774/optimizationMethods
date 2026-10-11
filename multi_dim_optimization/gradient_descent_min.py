@@ -1,9 +1,37 @@
+import time
+from typing import Callable
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import time
 
 from one_dimensional_optimization import dihotomy
+
+
+def gd_minimization(
+    func: Callable,
+    func_gd: Callable,
+    dim: int,
+    max_iterations: int = 400,
+    min_acc: float = 1e-5,
+) -> np.ndarray:
+    x: np.ndarray = np.random.uniform(-100, 100, dim)
+    for _ in range(max_iterations):
+        grad: np.ndarray = func_gd(x)
+        p: np.ndarray = grad
+        t: float = dihotomy(0, 10, lambda t: func(x - t * p))
+        prev_x: np.ndarray = x.copy()  # точка до изменения
+
+        # обновление точки
+        x -= t * grad
+        x_diff = x - prev_x
+
+        # условие досрочной остановки
+        if np.sum(np.abs(x_diff)) < min_acc:
+            break
+
+    return x
+
 
 pd.set_option("display.max_columns", None)
 pd.set_option("display.width", None)
