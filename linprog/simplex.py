@@ -20,10 +20,10 @@ def simplex_method(
     dim: int,
     history: list[dict] | None = None,
     max_iter: int = 100,
-    finding: Literal["max", "min"] = "min",
+    mode: Literal["max", "min"] = "min",
 ) -> np.ndarray:  # type: ignore
     """
-    Вычисляет заданное в finding значение (min/max) с заданными ограничениями
+    Вычисляет заданное в mode значение (min/max) с заданными ограничениями
 
     Args:
         B (list): вектор с индексами базисных переменных
@@ -33,7 +33,7 @@ def simplex_method(
         dim (int): размерность пространства
         history(list[dict] | None = None): таблица итераций. Defaults to None
         max_iter (int, optional): максимальное количество итераций. Defaults to 100.
-        finding (Literal["max", "min"], optional): какую точку находим (минимума или максимума). Defaults to "min".
+        mode (Literal["max", "min"], optional): какую точку находим (минимума или максимума). Defaults to "min".
 
     Returns:
         np.ndarray: точка минимума или максимума
@@ -82,7 +82,7 @@ def simplex_method(
 
         stop_condition: bool = (
             all([delta[i] >= 0 for i in NB])
-            if finding == "min"
+            if mode == "min"
             else all([delta[i] <= 0 for i in NB])
         )
         if stop_condition:
@@ -152,8 +152,8 @@ beta: dict = {1: 16, 2: 7}  # свободные члены
 min_history: list[dict] = []
 max_history: list[dict] = []
 
-x_max: np.ndarray = simplex_method(B, c, gamma, beta, dim, max_history, finding="max")
-x_min: np.ndarray = simplex_method(B, c, gamma, beta, dim, min_history, finding="min")
+x_max: np.ndarray = simplex_method(B, c, gamma, beta, dim, max_history, mode="max")
+x_min: np.ndarray = simplex_method(B, c, gamma, beta, dim, min_history, mode="min")
 
 df_min = pd.DataFrame(min_history)
 df_max = pd.DataFrame(max_history)
