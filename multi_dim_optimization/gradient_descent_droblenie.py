@@ -1,4 +1,5 @@
 import time
+from typing import Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -67,87 +68,84 @@ def get_my_func_grad(x: np.ndarray) -> np.ndarray:
     return np.array([x1_der(x), x2_der(x), x3_der(x)])
 
 
-x: np.ndarray = np.random.uniform(-100, 100, 3)  # генерация рандомной точки
+def gradient_descent_droblenie(
+    func: Callable,
+    func_grad: Callable,
+    history: list[dict] | None = None,
+    min_eps: float = 1e-5,
+    max_iterations: int = 2000,
+    c: float = 0.9,
+) -> np.ndarray:
 
-# инициализация вспомогательных списков для хранения данных итераций
-iterations: list = []
-x_k: list = []
-x_k_plus_1: list = []
-t_arr: list = []
-c_arr: list = []
-minus_f_x_k_plus_1_arr: list = []
-x_diff_arr: list = []
+    x: np.ndarray = np.random.uniform(-100, 100, 3)
+
+    for i in range(max_iterations):
+        t: float = 1.0
+        prev_x: np.ndarray = x.copy()
+        grad: np.ndarray = func_grad(x)
+
+        my_func_curr: float = func(x)
+        my_func_next: float = func(x - t * grad)
+
+        # дробление шага
+        while my_func_next > my_func_curr:
+            t *= c
+            my_func_next = func(x - t * grad)
+
+        # обновление точки
+        x -= t * grad
+        x_diff = x - prev_x
+
+        if history is not None:
+            history.append(
+                {
+                    "iteration": i + 1,
+                    "t": t,
+                    "c": c,
+                    "x_k": prev_x.copy(),
+                    "x_k+1": x.copy(),
+                    "x_diff": x_diff.copy(),
+                    "f(x_k+1)": -func(x),
+                }
+            )
+
+        # условие досрочной остановки
+        if np.sum(np.abs(x_diff)) < min_eps:
+            break
+
+    return x
 
 
-print(f"Initial point x = {x}")
-
+history: list[dict] = []
 
 start = time.perf_counter()
-
-for i in range(max_iterations):
-    t: float = 1  # коэффициент шага градиентного спуска
-    c: float = 0.9  # коэффициент дробления шага градиентного спуска
-    prev_x: np.ndarray = x.copy()  # точка до изменения
-    grad: np.ndarray = get_my_func_grad(x)  # градиент в точке
-    p: np.ndarray = grad
-
-    my_func_curr: float = get_my_func(x)  # значение функции в точке до изменения
-    my_func_next: float = get_my_func(
-        x - t * get_my_func_grad(x)
-    )  # значение функции в точке после изменения
-
-    # дробление шага
-    while my_func_next > my_func_curr:
-        t *= c
-        my_func_next: float = get_my_func(x - t * get_my_func_grad(x))
-
-    # обновление точки
-    x -= t * get_my_func_grad(x)
-
-    x_diff = x - prev_x
-
-    iterations.append(i)
-    t_arr.append(round(t, round_acc))
-    c_arr.append(round(c, round_acc))
-    x_k.append(np.round(prev_x, round_acc))
-    x_k_plus_1.append(np.round(x, round_acc))
-    minus_f_x_k_plus_1_arr.append(np.round(get_my_func(x), round_acc))
-    x_diff_arr.append(np.round(x - prev_x, round_acc))
-
-    # условие досрочной остановки
-    if np.sum(np.abs(x_diff)) < min_eps:
-        break
-
+extr = gradient_descent_droblenie(
+    func=get_my_func,
+    func_grad=get_my_func_grad,
+    history=history,
+    min_eps=min_eps,
+    max_iterations=max_iterations,
+)
 end = time.perf_counter()
 
 
 # таблица итераций
-df = pd.DataFrame(
-    {
-        "iteration": iterations,
-        "t": t_arr,
-        "x_k": x_k,
-        "x_k+1": x_k_plus_1,
-        "x_diff": x_diff_arr,
-        "f(x_k+1)": [-val for val in minus_f_x_k_plus_1_arr],
-    }
-)
+df = pd.DataFrame(history)
 
 print(df.head())
 print(df.tail())
 
 # найденный экстремум
-extr: np.ndarray = x_k_plus_1[-1]
 print(f"Extr = {extr}")
 
 print(f"Execution time: {end - start:.6f}")
-print(f"Iterations: {len(iterations)}")
+print(f"Iterations: {len(history)}")
 
 
 df.to_csv("result_gradient_descent_droblenie.txt", index=False)
 
 
-plt.plot(iterations, [-val for val in minus_f_x_k_plus_1_arr])
+plt.plot(df["iteration"], df["f(x_k+1)"])
 plt.xlabel("Итерация")
 plt.ylabel("Значение исходной функции")
 plt.title("Сходимость градиентного спуска (дробление)")
